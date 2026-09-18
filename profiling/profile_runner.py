@@ -3,60 +3,57 @@ import pstats
 import time
 import tracemalloc
 from unoptimized_version.engine import FeatureEngineUnoptimized
+from optimized_version.engine import FeatureEngineOptimized
 
 
 def generate_mock_data():
-    """Generates deterministic mock datasets for repeatable benchmarks."""
     import random
     random.seed(42)
-
-    # 200 samples with 50 dimensions each for matrix computation
     data_matrix = [[random.uniform(0.0, 100.0) for _ in range(50)] for _ in range(200)]
-    # 5,000 numerical features
     feature_list = [random.uniform(-50.0, 150.0) for _ in range(5000)]
-    # 10,000 ID records with repeated elements
     id_list = [random.randint(1000, 3000) for _ in range(10000)]
-
     return data_matrix, feature_list, id_list
 
 
-def run_baseline_benchmark():
-    engine = FeatureEngineUnoptimized()
+def run_comparative_benchmark():
     data_matrix, feature_list, id_list = generate_mock_data()
 
-    print("=" * 60)
-    print("RUNNING BASELINE (UNOPTIMIZED) PERFORMANCE PROFILE")
-    print("=" * 60)
+    unopt_engine = FeatureEngineUnoptimized()
+    opt_engine = FeatureEngineOptimized()
 
+    print("=" * 65)
+    print("RUNNING COMPARATIVE PERFORMANCE BENCHMARK")
+    print("=" * 65)
+
+    # 1. Baseline Run
     tracemalloc.start()
-    start_time = time.perf_counter()
-
-    # Execute all 3 tasks
-    _ = engine.compute_pairwise_distances(data_matrix)
-    _ = engine.normalize_and_filter(feature_list, threshold=2.0)
-    _ = engine.find_unique_ids(id_list)
-
-    end_time = time.perf_counter()
-    current_mem, peak_mem = tracemalloc.get_traced_memory()
+    t0 = time.perf_counter()
+    _ = unopt_engine.compute_pairwise_distances(data_matrix)
+    _ = unopt_engine.normalize_and_filter(feature_list, threshold=2.0)
+    _ = unopt_engine.find_unique_ids(id_list)
+    t1 = time.perf_counter()
+    _, unopt_mem = tracemalloc.get_traced_memory()
     tracemalloc.stop()
+    unopt_time = t1 - t0
 
-    total_time = end_time - start_time
-    print(f"\n[BASELINE METRICS]")
-    print(f"Total Execution Time: {total_time:.4f} seconds")
-    print(f"Peak Memory Usage:    {peak_mem / 1024 / 1024:.2f} MB\n")
+    # 2. Optimized Run
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    _ = opt_engine.compute_pairwise_distances(data_matrix)
+    _ = opt_engine.normalize_and_filter(feature_list, threshold=2.0)
+    _ = opt_engine.find_unique_ids(id_list)
+    t1 = time.perf_counter()
+    _, opt_mem = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    opt_time = t1 - t0
 
-    print("--- Detailed cProfile Function Breakdown ---")
-    profiler = cProfile.Profile()
-    profiler.enable()
+    speedup = unopt_time / opt_time if opt_time > 0 else 0
 
-    _ = engine.compute_pairwise_distances(data_matrix)
-    _ = engine.normalize_and_filter(feature_list, threshold=2.0)
-    _ = engine.find_unique_ids(id_list)
-
-    profiler.disable()
-    stats = pstats.Stats(profiler).sort_stats('cumtime')
-    stats.print_stats(10)
+    print(f"\n[BENCHMARK RESULTS]")
+    print(f"Unoptimized Execution Time: {unopt_time:.4f} s | Peak Memory: {unopt_mem / 1024 / 1024:.2f} MB")
+    print(f"Optimized Execution Time:   {opt_time:.4f} s | Peak Memory: {opt_mem / 1024 / 1024:.2f} MB")
+    print(f"Overall Speedup Factor:     {speedup:.2f}x Faster\n")
 
 
 if __name__ == "__main__":
-    run_baseline_benchmark()
+    run_comparative_benchmark()
