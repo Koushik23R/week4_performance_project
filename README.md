@@ -33,16 +33,21 @@ This project demonstrates a full performance engineering workflow:
 ```text
 week4_performance_project/
 ├── optimized_version/
-│   └── engine.py             # Optimized implementation
+│   ├── __init__.py          # Package marker
+│   └── engine.py            # Optimized implementation
 ├── profiling/
-│   └── profile_runner.py     # Benchmark and profiling runner
+│   └── profile_runner.py    # Benchmark and profiling runner
 ├── tests/
-│   └── test_parity.py        # Functional parity verification
+│   ├── __init__.py          # Test package marker
+│   └── test_parity.py       # Functional parity verification
 ├── unoptimized_version/
-│   └── engine.py             # Baseline implementation with bottlenecks
+│   ├── __init__.py          # Package marker
+│   └── engine.py            # Baseline implementation with bottlenecks
+├── docs/
+│   └── report.docx          # Project documentation / performance report
 ├── .gitignore
 ├── README.md
-└── .idea/
+└── .idea/                   # IDE local settings (not project code)
 ```
 
 ## Performance Highlights
